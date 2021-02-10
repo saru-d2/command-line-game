@@ -23,14 +23,14 @@ class Game:
         # initialize window, plank, ball
         self.window = Window(self._winHeight, self._winWidth)
         self.plank = Plank(self._winHeight - 2, self._winWidth/2 - 1, self._winHeight, self._winWidth)
-        # self.balls = []
-        # self.balls.append(Ball(np.array([self._winHeight - 3, self._winWidth / 2 -1])))
+        self.balls = []
+        self.balls.append(Ball(np.array([self._winHeight - 3, self._winWidth / 2 -1])))
 
 
     def drawObjs(self):
         self.window.draw(self.plank)
-        # for ball in self.balls:
-            # self.window.draw(ball)
+        for ball in self.balls:
+            self.window.draw(ball)
         return
 
     def quitGame(self, won):
@@ -55,9 +55,9 @@ class Game:
         elif inChar in {'a', 'd'}:
             self.plank.move(inChar)
 
-    # def handlePhysics(self):
-    #     for ball in self.balls:
-    #         ball.update()
+    def handlePhysics(self):
+        for ball in self.balls:
+            ball.update()
 
         
 
@@ -67,10 +67,10 @@ class Game:
             currFrameStartTime = time.monotonic()
 
             self.handleInput()
-            # self.handlePhysics()
-            self.drawObjs()
+            self.handlePhysics()
 
             self.window.clearFrame()
+            self.drawObjs()
             self.window.showFrame()
 
             while time.monotonic() - currFrameStartTime < conf.FRAME_TIME:
