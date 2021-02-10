@@ -8,6 +8,7 @@ class Window:
     def __init__(self, height, width):
         self.height = height
         self.width = width
+        self.ctr = 0
 
         self.grid = np.array(
             [[' ' for j in range(self.width)] for i in range(self.height)], dtype='object')
@@ -31,8 +32,10 @@ class Window:
         self.printGutter()
 
     def printGutter(self):
-        for i in range(conf.BOTTOM_GUTTER):
-            print('')
+        for i in range(conf.BOTTOM_GUTTER - 1):
+            print(i)
+        print(self.ctr)
+        self.ctr += 1
 
 
     def clearFrame(self):
