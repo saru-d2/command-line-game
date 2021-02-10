@@ -2,6 +2,7 @@ import numpy as np
 import config as conf
 from colorama import Fore, Back, Style, init
 import random
+import os
 
 
 class Window:
@@ -9,9 +10,12 @@ class Window:
         self.height = height
         self.width = width
         self.ctr = 0
+        self.topFrame = np.array([ Back.BLUE + ' ' + Back.RESET for i in range(width + 2)])
+        self.bottomFrame = self.topFrame
 
         self.grid = np.array(
             [[' ' for j in range(self.width)] for i in range(self.height)], dtype='object')
+        self.grid2 = self.grid
 
     def draw(self, obj):
         '''drawing on window'''
@@ -25,20 +29,30 @@ class Window:
         self.grid[x1:x2, y1:y2] = shape[:][:]
 
     def showFrame(self):
+        print("\033[0;0H") #resets cursor position
+        self.printTopGutter()
         for i in range(self.height):
+            print(Back.BLUE + ' ' + Back.RESET, end='')
             for j in range(self.width):
-                print(self.grid[i][j], end='')
-            print('')
-        self.printGutter()
+                print( '\033[1m' + self.grid[i][j], end='')
+            print(Back.BLUE + ' ' + Back.RESET)
+        self.printBottomGutter()
 
-    def printGutter(self):
-        for i in range(conf.BOTTOM_GUTTER - 1):
-            print(i)
+    def printBottomGutter(self):
+        for i in self.bottomFrame:
+            print(i, end='')
+        print('')
         print(self.ctr)
         self.ctr += 1
 
+    def printTopGutter(self):
+        for i in self.topFrame:
+            print(i, end='')
+        print('')
+
 
     def clearFrame(self):
+        '''clears grid'''
         for i in range(self.height):
             for j in range(self.width):
                 self.grid[i][j] = ' '

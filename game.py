@@ -6,7 +6,7 @@ import getch
 
 from ball import Ball
 import config as conf
-from plank import Plank
+from paddle import Paddle
 from window import Window
 
 
@@ -16,19 +16,19 @@ class Game:
 
     def __init__(self):
         print('initializing game')
-        winRows, winCols = os.popen('stty size', 'r').read().split()
-        self._winHeight = int(winRows) - conf.BOTTOM_GUTTER
-        self._winWidth = int(winCols) - conf.RIGHT_GUTTER
+        _winRows, _winCols = os.popen('stty size', 'r').read().split()
+        self._winHeight = int(_winRows) - conf.BOTTOM_GUTTER
+        self._winWidth = int(_winCols) - conf.RIGHT_GUTTER - 1
         
         # initialize window, plank, ball
         self.window = Window(self._winHeight, self._winWidth)
-        self.plank = Plank(self._winHeight - 2, self._winWidth/2 - 1, self._winHeight, self._winWidth)
+        self.paddle = Paddle(self._winHeight - 2, self._winWidth/2 - 1, self._winHeight, self._winWidth)
         self.balls = []
-        self.balls.append(Ball(np.array([self._winHeight - 3, self._winWidth / 2 -1])))
+        self.balls.append(Ball(np.array([self._winHeight - 3, self._winWidth / 2 -1]), self._winHeight, self._winWidth))
 
 
     def drawObjs(self):
-        self.window.draw(self.plank)
+        self.window.draw(self.paddle)
         for ball in self.balls:
             self.window.draw(ball)
         return
@@ -50,16 +50,17 @@ class Game:
             self.quitGame(won=False)
 
         elif inChar == ' ':
-            self.plank.grow()
+            self.paddle.grow()
 
         elif inChar in {'a', 'd'}:
-            self.plank.move(inChar)
+            self.paddle.move(inChar)
 
     def handlePhysics(self):
         for ball in self.balls:
+            ball.handleCollsWithWalls()
             ball.update()
+            ball.handleCollsWithPaddle(self.paddle)
 
-        
 
     def play(self):
         print('starting the inf loop ON PURPOSE :O')
