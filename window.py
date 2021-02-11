@@ -28,7 +28,7 @@ class Window:
 
         self.grid[x1:x2, y1:y2] = shape[:][:]
 
-    def showFrame(self):
+    def showFrame(self, numLives):
         print("\033[0;0H") #resets cursor position
         self.printTopGutter()
         for i in range(self.height):
@@ -36,13 +36,13 @@ class Window:
             for j in range(self.width):
                 print( '\033[1m' + self.grid[i][j], end='')
             print(Back.BLUE + ' ' + Back.RESET)
-        self.printBottomGutter()
+        self.printBottomGutter(numLives)
 
-    def printBottomGutter(self):
+    def printBottomGutter(self, numLives):
         for i in self.bottomFrame:
             print(i, end='')
         print('')
-        print(self.ctr)
+        print('Lives: ' + "\u2764\ufe0f " * numLives )
         self.ctr += 1
 
     def printTopGutter(self):
