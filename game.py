@@ -45,7 +45,7 @@ class Game:
 
     def makeBall(self):
         self.balls.append(Ball(np.array(
-            [self.paddle.x - 1, self.paddle.y + self.paddle.length / 2]), np.array([-1, random.randrange(-4, 5)]), self.paddle, False))
+            [self.paddle.x - 1, self.paddle.y + self.paddle.length / 2]), np.array([0, 0]), self.paddle, False))
 
     def launchBall(self):
         self.gameState = 1
@@ -106,8 +106,8 @@ class Game:
         elif inChar in {'a', 'd'}:
             self.paddle.move(inChar)
 
-        # elif inChar == 'l':
-        #     self.handleBallMultiply()
+        elif inChar == 'l':
+            self.handleFastBalls()
 
     def handlePhysics(self):
         for ball in self.balls:
@@ -133,11 +133,15 @@ class Game:
 
             powerup.update()
 
-    # def handleBallMultiply(self):
-    #     balls2 = self.balls
-    #     for ball in self.balls:
-    #         balls2.append(Ball(np.array([ball.x, ball.y]), np.array([ball.xVel, -1 * ball.yVel]), self.paddle, True ))
-    #     self.balls = balls2
+    def handleBallMultiply(self):
+        balls2 = self.balls.copy()
+        for ball in self.balls:
+            balls2.append(Ball(np.array([ball.x, ball.y]), np.array([ball.xVel, -1 * ball.yVel]), self.paddle, True ))
+        self.balls = balls2
+
+    def handleFastBalls(self):
+        for ball in self.balls:
+            ball.faster()
 
     def handlePowerup(self, power):
         if power == 'ep':
@@ -145,10 +149,10 @@ class Game:
         elif power == 'sp':
             self.paddle.shrink()
         elif power == 'fb':
-            # self.handleFastBalls()
+            self.handleFastBalls()
             pass
         elif power == 'bm':
-            # self.handleBallMultiply()
+            self.handleBallMultiply()
             pass
         elif power == 'tb':
             #handle thru
@@ -183,7 +187,7 @@ class Game:
 
             self.window.clearFrame()
             self.drawObjs()
-            self.window.showFrame(self.numLives)
+            self.window.showFrame(self.numLives, len(self.balls))
 
             while time.monotonic() - currFrameStartTime < conf.FRAME_TIME:
                 pass
