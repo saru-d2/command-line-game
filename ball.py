@@ -6,16 +6,16 @@ import math
 
 
 class Ball:
-    def __init__(self, pos, maxRows, maxCols, paddle):
+    def __init__(self, pos, vel, paddle, isLaunched):
         self.sprite = Fore.WHITE + '*' + Fore.RESET
         self.x = pos[0]
-        self.y = pos[0]
-        self.xVel = 0
-        self.yVel = 0
+        self.y = pos[1]
+        self.xVel = vel[0]
+        self.yVel = vel[1]
         self.color = Fore.WHITE
-        self.maxRows = maxRows
-        self.maxCols = maxCols
-        self.isLaunched = False
+        self.maxRows = conf.WINHEIGHT
+        self.maxCols = conf.WINWIDTH
+        self.isLaunched = isLaunched
         self.paddle = paddle
 
     def update(self):
@@ -58,18 +58,6 @@ class Ball:
             self.yVel += (self.y - pdlCntY) // 5
 
     def handleCollsWithBlock(self, block):
-        # if self.xVel != 0:
-        #     if self.x + self.xVel >= block.x and self.x + self.xVel <= block.x + conf.BLOCK_X_SIZE and self.y + self.yVel >= block.y and self.y + self.yVel <= block.y + conf.BLOCK_Y_SIZE:
-        #         #hit!
-        #         self.xVel *= -1
-        #         return True
-
-        # if self.yVel != 0:
-        #     if self.x + self.xVel >= block.x and self.x + self.xVel <= block.x + conf.BLOCK_X_SIZE and self.y + self.yVel >= block.y and self.y + self.yVel <= block.y + conf.BLOCK_Y_SIZE:
-        #         #hit!
-        #         self.yVel *= -1
-        #         return True
-
         if self.x + self.xVel >= block.x and self.x + self.xVel <= block.x + conf.BLOCK_X_SIZE and self.y + self.yVel >= block.y and self.y + self.yVel <= block.y + conf.BLOCK_Y_SIZE:
             # hit pakka
             # if x is in range before, pakka hit on y, same vice versa
@@ -89,7 +77,7 @@ class Ball:
         return False
 
     def launch(self):
-        vel = np.array([-1, random.randrange(-4, 4)])
+        vel = np.array([-1, random.randrange(-4, 5)])
         self.x = self.paddle.x
         self.y = self.paddle.y + self.paddle.length / 2
         self.xVel = vel[0]

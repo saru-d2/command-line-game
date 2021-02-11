@@ -41,8 +41,8 @@ class Window:
     def printBottomGutter(self, numLives):
         for i in self.bottomFrame:
             print(i, end='')
-        print('')
-        print('Lives: ' + "\u2764\ufe0f " * numLives )
+        print('\033[0K')
+        print('\r Lives: ' + '\u2764\ufe0f ' * numLives + ' ' * (3 - numLives))
         self.ctr += 1
 
     def printTopGutter(self):

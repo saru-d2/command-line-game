@@ -24,6 +24,12 @@ class Paddle():
                 self.y -= 1
             self.length += 2
 
+    def shrink(self):
+        '''grows the paddle'''
+        if self.length < conf.MINLEN_PADDLE:
+            self.length -= 2
+            self.y += 1
+
     def show(self):
         '''pos, dim, shape'''
         shape = np.array([])
