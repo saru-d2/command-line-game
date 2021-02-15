@@ -26,7 +26,7 @@ class Paddle():
 
     def shrink(self):
         '''grows the paddle'''
-        if self.length < conf.MINLEN_PADDLE:
+        if self.length > conf.MINLEN_PADDLE:
             self.length -= 2
             self.y += 1
 
@@ -52,3 +52,7 @@ class Paddle():
                 self.y += self.vel
             else:
                 self.y = self.maxCols - self.length
+
+
+    def reset(self):
+        self.length = 20

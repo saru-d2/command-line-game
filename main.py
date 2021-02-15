@@ -20,5 +20,4 @@ if (int(winRows) < conf.MIN_ROWS or int(winCols) < conf.MIN_COLS):
 
 # game initialize
 game = Game()
-time.sleep(1)
 game.play()

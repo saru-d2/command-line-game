@@ -9,7 +9,7 @@ from ball import Ball
 import config as conf
 from paddle import Paddle
 from window import Window
-from block import Block
+from block import StandardBlock, UnbreakableBlock
 from powerup import Powerup
 
 
@@ -42,22 +42,28 @@ class Game:
 
         # 0 -> just as started/ after dying, 1-> in game
         self.gameState = 0
+        self.thruFlag = False
+        self.grabFlag = False
+        self.activePowerups = []
 
     def makeBall(self):
         self.balls.append(Ball(np.array(
             [self.paddle.x - 1, self.paddle.y + self.paddle.length / 2]), np.array([0, 0]), self.paddle, False))
 
     def launchBall(self):
-        self.gameState = 1
         for ball in self.balls:
-            ball.launch()
+            if not ball.isLaunched:
+                ball.launch()
 
     def generateBlocks(self):
         for i in range(0, self._winHeight - 10, conf.BLOCK_X_SIZE):
             j = 0
             while j + conf.BLOCK_Y_SIZE < self._winWidth:
                 if conf.BLOCK_PROB <= random.uniform(0, 1):
-                    self.blocks.append(Block(np.array([i, j])))
+                    if conf.UNBREAKABLEBLOCK_PROB > random.uniform(0, 1):
+                        self.blocks.append(UnbreakableBlock(np.array([i, j])))
+                    else:
+                        self.blocks.append(StandardBlock(np.array([i, j])))
                     j += conf.BLOCK_Y_SIZE
                 else:
                     j += 1
@@ -77,6 +83,11 @@ class Game:
         return
 
     def onDying(self):
+        self.thruFlag = False
+        self.paddle.reset()
+        self.powerups.clear()
+        self.balls.clear()
+        self.activePowerups.clear()
         self.gameState = 0
         self.numLives -= 1
         if self.numLives <= 0:
@@ -85,10 +96,7 @@ class Game:
 
     def quitGame(self, won):
         '''true if won'''
-        if (won):
-            print('u won gg')
-        else:
-            print('sucker')
+        self.window.gameOver(won)
         raise SystemExit
 
     def handleInput(self):
@@ -100,14 +108,17 @@ class Game:
             # quit
             self.quitGame(won=False)
 
-        elif inChar == ' ' and self.gameState == 0:
+        elif inChar == ' ' :
             self.launchBall()
 
         elif inChar in {'a', 'd'}:
             self.paddle.move(inChar)
 
         elif inChar == 'l':
-            self.handleFastBalls()
+            self.grabFlag = True
+
+        elif inChar == 'k':
+            self.paddle.shrink()
 
     def handlePhysics(self):
         for ball in self.balls:
@@ -116,27 +127,57 @@ class Game:
                 self.balls.remove(ball)
                 if len(self.balls) == 0:
                     self.onDying()
-            ball.handleCollsWithPaddle(self.paddle)
+            if not self.grabFlag:
+                ball.handleCollsWithPaddle(self.paddle)
+            else:
+                ret = ball.handleGrabColl(self.paddle)
+                if ret:
+                    # self.gameState = 0
+                    pass
+
             self.handleCollsWithBlocks(self.blocks, ball)
             ball.update()
 
         for powerup in self.powerups:
             powerupActivated = powerup.handleCollWithPaddle(self.paddle)
             if powerupActivated:
-                #handle powerup
+                # handle powerup
                 self.handlePowerup(powerup.power)
                 self.powerups.remove(powerup)
+                if powerup.power != 'bm':
+                    self.activePowerups.append({'time': time.monotonic(), 'power': powerup.power})
 
             powerupDead = powerup.handleCollWithFloor()
             if powerupDead:
                 self.powerups.remove(powerup)
-
             powerup.update()
+
+        for powerup in self.activePowerups:
+            if time.monotonic() - powerup['time'] >= conf.POWERUP_EXPIRE_TIME:
+                # expired
+                self.resetPower(powerup['power'])
+                self.activePowerups.remove(powerup)
+
+    def resetPower(self, power):
+        if power == 'ep':
+            self.paddle.shrink()
+        elif power == 'sp':
+            self.paddle.grow()
+        elif power == 'tb':
+            self.thruFlag = False
+        elif power == 'pg':
+            self.grabFlag = False
+        elif power == 'fb':
+            for ball in self.balls:
+                ball.slower()
+
+
 
     def handleBallMultiply(self):
         balls2 = self.balls.copy()
         for ball in self.balls:
-            balls2.append(Ball(np.array([ball.x, ball.y]), np.array([ball.xVel, -1 * ball.yVel]), self.paddle, True ))
+            balls2.append(Ball(np.array([ball.x, ball.y]), np.array(
+                [ball.xVel, -1 * ball.yVel]), self.paddle, True))
         self.balls = balls2
 
     def handleFastBalls(self):
@@ -155,39 +196,62 @@ class Game:
             self.handleBallMultiply()
             pass
         elif power == 'tb':
-            #handle thru
+            # handle thru
+            self.thruFlag = not self.thruFlag
             pass
         elif power == 'pg':
-            #handle 
-            pass            
+            self.grabFlag = not self.grabFlag
+            # handle
+            pass
 
     def generatePowerup(self, pos):
-        self.powerups.append(Powerup(pos, conf.POWERUP_LIST[random.randrange(0, 6)]))
+        self.powerups.append(
+            Powerup(pos, conf.POWERUP_LIST[random.randrange(0, 6)]))
 
     def handleCollsWithBlocks(self, blocks, ball):
-        for block in self.blocks:
-            hit = ball.handleCollsWithBlock(block)
-            if hit:
-                ded = block.hit()
-                if ded:
+        if not self.thruFlag:
+            for block in self.blocks:
+                hit = ball.handleCollsWithBlock(block)
+                if hit:
+                    ded = block.hit()
+                    if ded:
+                        self.blocks.remove(block)
+                        # chance to generate powerup
+                        if random.uniform(0, 1) > conf.POWERUP_PROB:
+                            # generate powerup
+                            self.generatePowerup(np.array([block.x, block.y]))
+                            pass
+        else:
+            for block in self.blocks:
+                destroyed = ball.destroy(block)
+                if destroyed:
+                    block.hit()
                     self.blocks.remove(block)
                     # chance to generate powerup
                     if random.uniform(0, 1) > conf.POWERUP_PROB:
-                        #generate powerup
+                        # generate powerup
                         self.generatePowerup(np.array([block.x, block.y]))
                         pass
 
-   
+    def checkWinningCondition(self):
+        for block in self.blocks:
+            if block.health != 0:
+                return False
+        self.quitGame(True)
+        return True
+
     def play(self):
+        self.window.printWelcome()
         while True:
             currFrameStartTime = time.monotonic()
 
             self.handleInput()
             self.handlePhysics()
 
+            self.checkWinningCondition()
             self.window.clearFrame()
             self.drawObjs()
-            self.window.showFrame(self.numLives, len(self.balls))
+            self.window.showFrame(self.numLives, len(self.balls), self.activePowerups)
 
             while time.monotonic() - currFrameStartTime < conf.FRAME_TIME:
                 pass
