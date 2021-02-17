@@ -1,5 +1,12 @@
-# the second dass assignment! yay
+# brick breaker
 
-this game is called ball breaker because... yeah.
+uses OOPS :O
 
-as a dumb person, coding this took intense mehnat, and i actually did everything and hence am proud of this unplayable burning shit-monster of a game
+instructions to run:
+
+```python3
+    python3 main.py
+```
+
+ensure that colorama and numpy are installed
+

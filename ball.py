@@ -58,7 +58,12 @@ class Ball:
             self.xVel = -self.xVel
             # get dist from center of paddle
             pdlCntY = objPos[1] + (objSize[1] / 2)
-            self.yVel += (self.y - pdlCntY) // 5
+            # self.yVel += (self.y - pdlCntY) // 5
+            dist = abs(self.y - pdlCntY)
+            if self.y > pdlCntY:
+                self.yVel += dist // 3
+            else:
+                self.yVel -= dist // 3
 
     def handleGrabColl(self, obj):
         objPos, objSize, _ = obj.show()

@@ -32,6 +32,7 @@ class Game:
         self.balls = []
 
         # making blocks
+        self.numBlocks = 0
         self.blocks = []
         self.generateBlocks()
 
@@ -61,7 +62,6 @@ class Game:
 
     def generateBlocks(self):
         offset = (self._winWidth % conf.BLOCK_Y_SIZE) // 2
-
         blockMap = np.zeros(((self._winHeight - 10) // conf.BLOCK_X_SIZE, self._winWidth // conf.BLOCK_Y_SIZE))
 
         for i in range((self._winHeight - 10) // 2):
@@ -73,6 +73,7 @@ class Game:
                 for j in range(start, start + len):
                     self.blocks.append(ExplodingBlock(np.array([i * conf.BLOCK_X_SIZE, j * conf.BLOCK_Y_SIZE + offset])))
                     blockMap[i][j] = 1
+                    self.numBlocks += 1
 
         for j in range((self._winWidth) // conf.BLOCK_Y_SIZE):
             if random.uniform(0, 1) <= conf.EXPLODING_PROB :
@@ -83,6 +84,7 @@ class Game:
                 for i in range(start, start + len):
                     self.blocks.append(ExplodingBlock(np.array([i * conf.BLOCK_X_SIZE, j * conf.BLOCK_Y_SIZE + offset])))
                     blockMap[i][j] = 1
+                    self.numBlocks += 1
                     # print(i, j)
 
         i = 0
@@ -95,6 +97,7 @@ class Game:
                     else:
                         self.blocks.append(StandardBlock(np.array([i, j + offset])))
                     j += conf.BLOCK_Y_SIZE
+                    self.numBlocks += 1
                 else:
                     j += conf.BLOCK_Y_SIZE
             i += conf.BLOCK_X_SIZE
@@ -128,7 +131,7 @@ class Game:
 
     def quitGame(self, won):
         '''true if won'''
-        self.window.gameOver(won)
+        self.window.gameOver(won, self.numBlocks - len(self.blocks))
         raise SystemExit
 
     def handleInput(self):
@@ -303,7 +306,7 @@ class Game:
             self.window.clearFrame()
             self.drawObjs()
             self.window.showFrame(self.numLives, len(self.balls),
-                                  self.activePowerups)
+                                  self.activePowerups, self.numBlocks - len(self.blocks))
 
             while time.monotonic() - currFrameStartTime < conf.FRAME_TIME:
                 pass
