@@ -149,11 +149,11 @@ class Game:
         elif inChar in {'a', 'd'}:
             self.paddle.move(inChar)
 
-        elif inChar == 'l':
-            self.grabFlag = True
+        # elif inChar == 'l':
+        #     self.grabFlag = True
 
-        elif inChar == 'k':
-            self.paddle.shrink()
+        # elif inChar == 'k':
+        #     self.paddle.shrink()
 
     def handleExploding(self):
         newQueue = []
