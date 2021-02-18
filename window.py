@@ -19,7 +19,8 @@ class Window:
             [[' ' for j in range(self.width)] for i in range(self.height)],
             dtype='object',
         )
-        self.grid2 = self.grid
+        self.grid2 = self.grid.copy()
+        self.startTime = time.monotonic()
 
     def draw(self, obj):
         '''drawing on window'''
@@ -52,6 +53,7 @@ class Window:
               end='')
         for powerup in activePowerups:
             print(powerup['power'] + ', ', end='')
+        print('time: ' + str( int(time.monotonic() - self.startTime) ))
         print('')
         self.ctr += 1
 

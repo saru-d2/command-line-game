@@ -27,15 +27,15 @@ class Ball:
         self.y += self.yVel
 
     def handleCollsWithWalls(self):
-        if self.x <= 0 and self.xVel < 0:
+        if self.x <= 0 + self.xVel and self.xVel < 0:
             self.xVel = self.xVel * -1
-        if self.x  >= self.maxRows and self.xVel > 0:
+        if self.x  + self.xVel >= self.maxRows and self.xVel > 0:
             self.xVel = self.xVel * -1
             return True  # death condition
 
-        if self.y  <= 0 and self.yVel < 0:
+        if self.y + self.yVel  <= 0 and self.yVel < 0:
             self.yVel = self.yVel * -1
-        if self.y  >= self.maxCols and self.yVel > 0:
+        if self.y + self.yVel >= self.maxCols and self.yVel > 0:
             self.yVel = self.yVel * -1
 
         # check out of bounds
@@ -48,8 +48,8 @@ class Ball:
         if self.y < 0:
             self.y = 0
         if self.y >= self.maxCols:
-            self.y = self.maxCols - 1
-
+            self.y = self.maxCols -1
+        
         return False
 
     def handleCollsWithPaddle(self, obj):
