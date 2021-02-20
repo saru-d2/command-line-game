@@ -35,9 +35,9 @@ class Paddle():
         shape = np.array([])
         for i in range(self.length):
             if i == self.length//2:
-                shape = np.append(shape, Fore.RED+'='+Fore.RESET)
+                shape = np.append(shape, Back.RED+'='+Back.RESET)
             else:
-                shape = np.append(shape, Fore.BLUE+'='+Fore.RESET)
+                shape = np.append(shape, Back.BLUE+'='+Back.RESET)
         # shape = np.append(shape, Fore.RESET)
         return np.array([self.x, self.y]), np.array([1, self.length]), shape
 

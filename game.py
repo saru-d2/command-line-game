@@ -62,27 +62,40 @@ class Game:
 
     def generateBlocks(self):
         offset = (self._winWidth % conf.BLOCK_Y_SIZE) // 2
-        blockMap = np.zeros(((self._winHeight - 10) // conf.BLOCK_X_SIZE, self._winWidth // conf.BLOCK_Y_SIZE))
+        blockMap = np.zeros(((self._winHeight - 10) // conf.BLOCK_X_SIZE,
+                             self._winWidth // conf.BLOCK_Y_SIZE))
 
         for i in range((self._winHeight - 10) // 2):
-            if random.uniform(0, 1) <= conf.EXPLODING_PROB :
+            if random.uniform(0, 1) <= conf.EXPLODING_PROB:
                 len = random.randrange(6, 9)
                 # print(self._winWidth // conf.BLOCK_Y_SIZE )
-                start = random.randrange(0, ((self._winWidth)// conf.BLOCK_Y_SIZE - len ))
+                start = random.randrange(
+                    0, ((self._winWidth) // conf.BLOCK_Y_SIZE - len))
                 print(start)
                 for j in range(start, start + len):
-                    self.blocks.append(ExplodingBlock(np.array([i * conf.BLOCK_X_SIZE, j * conf.BLOCK_Y_SIZE + offset])))
+                    self.blocks.append(
+                        ExplodingBlock(
+                            np.array([
+                                i * conf.BLOCK_X_SIZE,
+                                j * conf.BLOCK_Y_SIZE + offset
+                            ])))
                     blockMap[i][j] = 1
                     self.numBlocks += 1
 
         for j in range((self._winWidth) // conf.BLOCK_Y_SIZE):
-            if random.uniform(0, 1) <= conf.EXPLODING_PROB :
+            if random.uniform(0, 1) <= conf.EXPLODING_PROB:
                 len = random.randrange(6, 9)
                 # print(self._winWidth // conf.BLOCK_Y_SIZE )
-                start = random.randrange(0, ((self._winHeight - 10)// conf.BLOCK_X_SIZE - len ))
+                start = random.randrange(
+                    0, ((self._winHeight - 10) // conf.BLOCK_X_SIZE - len))
                 print(start)
                 for i in range(start, start + len):
-                    self.blocks.append(ExplodingBlock(np.array([i * conf.BLOCK_X_SIZE, j * conf.BLOCK_Y_SIZE + offset])))
+                    self.blocks.append(
+                        ExplodingBlock(
+                            np.array([
+                                i * conf.BLOCK_X_SIZE,
+                                j * conf.BLOCK_Y_SIZE + offset
+                            ])))
                     blockMap[i][j] = 1
                     self.numBlocks += 1
                     # print(i, j)
@@ -91,11 +104,14 @@ class Game:
         while i + conf.BLOCK_X_SIZE < self._winHeight - 10:
             j = 0
             while j + conf.BLOCK_Y_SIZE < self._winWidth:
-                if conf.BLOCK_PROB > random.uniform(0, 1) and blockMap[i // conf.BLOCK_X_SIZE][j // conf.BLOCK_Y_SIZE] == 0:
+                if conf.BLOCK_PROB > random.uniform(0, 1) and blockMap[
+                        i // conf.BLOCK_X_SIZE][j // conf.BLOCK_Y_SIZE] == 0:
                     if conf.UNBREAKABLEBLOCK_PROB > random.uniform(0, 1):
-                        self.blocks.append(UnbreakableBlock(np.array([i, j + offset])))
+                        self.blocks.append(
+                            UnbreakableBlock(np.array([i, j + offset])))
                     else:
-                        self.blocks.append(StandardBlock(np.array([i, j + offset])))
+                        self.blocks.append(
+                            StandardBlock(np.array([i, j + offset])))
                     j += conf.BLOCK_Y_SIZE
                     self.numBlocks += 1
                 else:
@@ -150,7 +166,8 @@ class Game:
             self.paddle.move(inChar)
 
         # elif inChar == 'l':
-        #     self.grabFlag = True
+        #     self.handleBallMultiply()
+        #     pass
 
         # elif inChar == 'k':
         #     self.paddle.shrink()
@@ -160,18 +177,18 @@ class Game:
         for block in self.blockQueue:
             if block.health == 4:
                 for b in self.blocks:
-                        if b == block:
-                            continue
-                        if abs(b.x - block.x) <= conf.BLOCK_X_SIZE and abs(b.y - block.y) <= conf.BLOCK_Y_SIZE:
-                            newQueue.append(b)
-            if block in self.blocks : 
+                    if b == block:
+                        continue
+                    if abs(b.x - block.x) <= conf.BLOCK_X_SIZE and abs(
+                            b.y - block.y) <= conf.BLOCK_Y_SIZE:
+                        newQueue.append(b)
+            if block in self.blocks:
                 self.blocks.remove(block)
         self.blockQueue.clear()
         self.blockQueue = newQueue
 
-
     def handlePhysics(self):
-        
+
         self.handleExploding()
 
         for ball in self.balls:
@@ -232,7 +249,8 @@ class Game:
         for ball in self.balls:
             balls2.append(
                 Ball(np.array([ball.x, ball.y]),
-                     np.array([ball.xVel, -1 * ball.yVel]), self.paddle, True))
+                     np.array([ball.xVel, -1 * ball.yVel]), self.paddle,
+                     ball.isLaunched))
         self.balls = balls2
 
     def handleFastBalls(self):
@@ -273,11 +291,12 @@ class Game:
             if hit:
                 ded = block.hit()
                 if ded or self.thruFlag > 0:
-                    if block.health == 4: #exploding
+                    if block.health == 4:  #exploding
                         for b in self.blocks:
                             if b == block:
                                 continue
-                            if abs(b.x - block.x) <= conf.BLOCK_X_SIZE and abs(b.y - block.y) <= conf.BLOCK_Y_SIZE:
+                            if abs(b.x - block.x) <= conf.BLOCK_X_SIZE and abs(
+                                    b.y - block.y) <= conf.BLOCK_Y_SIZE:
                                 self.blockQueue.append(b)
                     if block in self.blocks:
                         self.blocks.remove(block)
@@ -286,7 +305,7 @@ class Game:
                         # generate powerup
                         self.generatePowerup(np.array([block.x, block.y]))
                         pass
-        
+
     def checkWinningCondition(self):
         for block in self.blocks:
             if block.health != 0:
@@ -302,12 +321,13 @@ class Game:
             self.handleInput()
             self.handlePhysics()
 
-            self.checkWinningCondition()
             self.window.clearFrame()
             self.drawObjs()
             self.window.showFrame(self.numLives, len(self.balls),
-                                  self.activePowerups, self.numBlocks - len(self.blocks))
+                                  self.activePowerups,
+                                  self.numBlocks - len(self.blocks))
 
+            self.checkWinningCondition()
             while time.monotonic() - currFrameStartTime < conf.FRAME_TIME:
                 pass
         return

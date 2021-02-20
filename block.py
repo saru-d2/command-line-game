@@ -15,8 +15,7 @@ class ParentBlock:
 class StandardBlock(ParentBlock):
     def __init__(self, pos):
         self.health = random.randrange(1, 4)
-        self.x = pos[0]
-        self.y = pos[1]
+        
         self.type = 'standard'
         super().__init__(pos)
 
@@ -29,8 +28,7 @@ class StandardBlock(ParentBlock):
 class UnbreakableBlock(ParentBlock):
     def __init__(self, pos):
         self.health = 0
-        self.x = pos[0]
-        self.y = pos[1]
+        
         self.type = 'unbreakable'
 
         super().__init__(pos)
@@ -42,9 +40,6 @@ class UnbreakableBlock(ParentBlock):
 class ExplodingBlock(ParentBlock):
     def __init__(self, pos):
         self.health = 4
-        self.x = pos[0]
-        self.y = pos[1]
-
         super().__init__(pos)
 
     def hit(self):

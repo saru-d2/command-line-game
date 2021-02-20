@@ -102,6 +102,7 @@ class Window:
                     print('')
 
         print('score: ' + str(score))
+        print('time: ' + str( int(time.monotonic() - self.startTime)))
 
     def printWelcome(self):
         art = self.getAssests('./assets/welcome.txt')

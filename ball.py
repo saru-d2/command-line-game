@@ -7,7 +7,7 @@ import math
 
 class Ball:
     def __init__(self, pos, vel, paddle, isLaunched):
-        self.sprite = Fore.WHITE + '*' + Fore.RESET
+        self.sprite =  '⚬' 
         self.x = pos[0]
         self.y = pos[1]
         self.xVel = vel[0]
@@ -29,6 +29,7 @@ class Ball:
     def handleCollsWithWalls(self):
         if self.x <= 0 + self.xVel and self.xVel < 0:
             self.xVel = self.xVel * -1
+            self.x = 0
         if self.x  + self.xVel >= self.maxRows and self.xVel > 0:
             self.xVel = self.xVel * -1
             return True  # death condition
@@ -54,11 +55,12 @@ class Ball:
 
     def handleCollsWithPaddle(self, obj):
         objPos, objSize, _ = obj.show()
-        if self.x >= objPos[0] and self.x <= objPos[0] + objSize[0] and self.y  >= objPos[1] and self.y  <= objPos[1] + objSize[1] and self.xVel > 0:
+        if self.x + self.xVel >= objPos[0] and self.x + self.xVel<= objPos[0] + objSize[0] and self.y + self.yVel  >= objPos[1] and self.y + self.yVel  <= objPos[1] + objSize[1] and self.xVel > 0:
             self.xVel = -self.xVel
             # get dist from center of paddle
             pdlCntY = objPos[1] + (objSize[1] / 2)
             # self.yVel += (self.y - pdlCntY) // 5
+            self.x = obj.x - 1
             dist = abs(self.y - pdlCntY)
             if self.y > pdlCntY:
                 self.yVel += dist // 3
@@ -67,7 +69,7 @@ class Ball:
 
     def handleGrabColl(self, obj):
         objPos, objSize, _ = obj.show()
-        if self.x >= objPos[0] and self.x <= objPos[0] + objSize[0] and self.y  >= objPos[1] and self.y  <= objPos[1] + objSize[1] and self.xVel > 0:
+        if self.x + self.xVel >= objPos[0] and self.x + self.xVel <= objPos[0] + objSize[0] and self.y + self.yVel  >= objPos[1] and self.y + self.yVel <= objPos[1] + objSize[1] and self.xVel > 0:
             self.xVelNext = -self.xVel
             # get dist from center of paddle
             pdlCntY = objPos[1] + (objSize[1] / 2)
@@ -75,6 +77,7 @@ class Ball:
             self.xVel = 0
             self.yVel = 0
             self.isLaunched = False
+            self.x = obj.x - 1
             self.relY = self.y - self.paddle.y
             return True
         return False
@@ -111,7 +114,7 @@ class Ball:
         else:
             self.xVel = self.xVelNext
             self.yVel = self.yVelNext
-        self.x = self.paddle.x
+        self.x = self.paddle.x - 1
         self.y = self.paddle.y + self.relY
         self.isLaunched = True
 
@@ -139,5 +142,5 @@ class Ball:
     def show(self):
         '''pos, dim, shape'''
         if self.isLaunched:
-            return np.array([self.x, self.y]), np.array([1, 1]), np.array([[self.color + '*' + Fore.RESET]])
-        return np.array([self.paddle.x, self.paddle.y + self.relY]), np.array([1, 1]), np.array([[self.color + '*' + Fore.RESET]])
+            return np.array([self.x, self.y]), np.array([1, 1]), np.array([[self.color + self.sprite + Fore.RESET]])
+        return np.array([self.paddle.x - 1, self.paddle.y + self.relY]), np.array([1, 1]), np.array([[self.color + self.sprite + Fore.RESET]])
