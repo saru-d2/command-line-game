@@ -52,7 +52,7 @@ class Game:
         self.balls.append(
             Ball(
                 np.array([
-                    self.paddle.x - 1, self.paddle.y + self.paddle.length / 2
+                    self.paddle.x - 1, self.paddle.y + random.randrange(0, self.paddle.length)
                 ]), np.array([0, 0]), self.paddle, False))
 
     def launchBall(self):

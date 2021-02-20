@@ -19,7 +19,7 @@ class Ball:
         self.paddle = paddle
         self.xVelNext = -1
         self.yVelNext = -1
-        self.relY = self.paddle.length / 2 
+        self.relY = self.y - (self.paddle.y) 
 
     def update(self):
         '''updates position'''
@@ -107,8 +107,8 @@ class Ball:
         return False
 
     def launch(self):
-        if self.x == -1 or self.y == -1:
-            vel = np.array([-1, random.randrange(-4, 5)])
+        if self.xVelNext == -1 or self.yVelNext == -1:
+            vel = np.array([-1, (self.relY - self.paddle.length // 2 ) // 3])
             self.xVel = vel[0]
             self.yVel = vel[1]
         else:
