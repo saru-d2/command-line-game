@@ -11,6 +11,7 @@ from paddle import Paddle
 from window import Window
 from block import StandardBlock, UnbreakableBlock, ExplodingBlock
 from powerup import Powerup
+from generateLevel import generateLevel
 
 
 class Game:
@@ -20,8 +21,8 @@ class Game:
     def __init__(self):
         print('initializing game')
         _winRows, _winCols = os.popen('stty size', 'r').read().split()
-        self._winHeight = int(_winRows) - conf.BOTTOM_GUTTER
-        self._winWidth = int(_winCols) - conf.RIGHT_GUTTER - 1
+        self._winHeight = conf.MIN_ROWS
+        self._winWidth = conf.MIN_COLS
         conf.WINHEIGHT = self._winHeight
         conf.WINWIDTH = self._winWidth
 
@@ -29,13 +30,14 @@ class Game:
         self.window = Window(self._winHeight, self._winWidth)
         self.paddle = Paddle(self._winHeight - 2, self._winWidth / 2 - 1,
                              self._winHeight, self._winWidth)
-        self.balls = []
 
-        # making blocks
+        self.level = 1
         self.numBlocks = 0
-        self.blocks = []
-        self.generateBlocks()
+        # self.blocks = []
+        # self.generateBlocks()
+        self.blocks = generateLevel(1)
 
+        self.balls = []
         self.numLives = 3
         self.makeBall()
 
@@ -52,7 +54,8 @@ class Game:
         self.balls.append(
             Ball(
                 np.array([
-                    self.paddle.x - 1, self.paddle.y + random.randrange(0, self.paddle.length)
+                    self.paddle.x - 1, self.paddle.y +
+                    random.randrange(0, self.paddle.length)
                 ]), np.array([0, 0]), self.paddle, False))
 
     def launchBall(self):
@@ -150,6 +153,9 @@ class Game:
         self.window.gameOver(won, self.numBlocks - len(self.blocks))
         raise SystemExit
 
+    def skipLevel(self):
+        self.blocks.clear()
+
     def handleInput(self):
         inChar = getch.getchar()
         if inChar == None:
@@ -164,6 +170,9 @@ class Game:
 
         elif inChar in {'a', 'd'}:
             self.paddle.move(inChar)
+
+        elif inChar == 'p':
+            self.skipLevel()
 
         # elif inChar == 'l':
         #     self.handleBallMultiply()
@@ -291,7 +300,7 @@ class Game:
             if hit:
                 ded = block.hit()
                 if ded or self.thruFlag > 0:
-                    if block.health == 4:  #exploding
+                    if block.health == 4:  # exploding
                         for b in self.blocks:
                             if b == block:
                                 continue
@@ -306,11 +315,28 @@ class Game:
                         self.generatePowerup(np.array([block.x, block.y]))
                         pass
 
+    def newLevel(self):
+        self.blocks = generateLevel(self.level)
+        self.thruFlag = 0
+        self.grabFlag = 0
+        self.paddle.reset()
+        self.powerups.clear()
+        self.balls.clear()
+        self.makeBall()
+        self.activePowerups.clear()
+        self.gameState = 0
+
     def checkWinningCondition(self):
         for block in self.blocks:
             if block.health != 0:
                 return False
-        self.quitGame(True)
+        if self.level >= 3:
+            self.quitGame(True)
+        else:
+            self.level += 1
+            self.window.flash(self.level)
+            self.newLevel()
+            
         return True
 
     def play(self):

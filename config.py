@@ -2,8 +2,8 @@
 
 from colorama import Fore, Back, Style, init
 
-MIN_ROWS = 20
-MIN_COLS = 30
+MIN_ROWS = 40
+MIN_COLS = 100
 
 BOTTOM_GUTTER = 7
 RIGHT_GUTTER = 5

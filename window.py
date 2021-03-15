@@ -53,7 +53,7 @@ class Window:
               end='')
         for powerup in activePowerups:
             print(powerup['power'] + ', ', end='')
-        print('time: ' + str( int(time.monotonic() - self.startTime) ))
+        print('time: ' + str(int(time.monotonic() - self.startTime)))
         print('')
         self.ctr += 1
 
@@ -102,7 +102,7 @@ class Window:
                     print('')
 
         print('score: ' + str(score))
-        print('time: ' + str( int(time.monotonic() - self.startTime)))
+        print('time: ' + str(int(time.monotonic() - self.startTime)))
 
     def printWelcome(self):
         art = self.getAssests('./assets/welcome.txt')
@@ -111,4 +111,19 @@ class Window:
                 for j in range(art.shape[1]):
                     print(art[i][j], end='')
                 print('')
+        time.sleep(1)
+
+    def flash(self, level):
+        self.clearFrame()
+        print('\033[0;0H')
+        self.printTopGutter()
+        for i in range(self.height):
+            print(Back.BLUE + ' ' + Back.RESET, end='')
+            for j in range(self.width):
+                print('\033[1m' + self.grid[i][j], end='')
+            print(Back.BLUE + ' ' + Back.RESET)  # resets cursor position
+        print('\033[0;0H')
+        print('')
+        print('')
+        print('\t\tONTO LEVEL ' + str(level))
         time.sleep(1)
