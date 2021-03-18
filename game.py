@@ -25,6 +25,7 @@ class Game:
         print('initializing game')
         _winRows, _winCols = os.popen('stty size', 'r').read().split()
         self._winHeight = conf.MIN_ROWS
+        self.ctr = 0
         self._winWidth = conf.MIN_COLS
         conf.WINHEIGHT = self._winHeight
         conf.WINWIDTH = self._winWidth
@@ -231,10 +232,11 @@ class Game:
 
         if self.shootFlag > 0:
             # shooootttt
-            self.bullets.append(
-                Bullet(np.array([self.paddle.x, self.paddle.y])))
-            self.bullets.append(
-                Bullet(np.array([self.paddle.x, self.paddle.y + self.paddle.length])))
+            if self.ctr:
+                self.bullets.append(
+                    Bullet(np.array([self.paddle.x, self.paddle.y])))
+                self.bullets.append(
+                    Bullet(np.array([self.paddle.x, self.paddle.y + self.paddle.length])))
 
 
         
@@ -356,9 +358,10 @@ class Game:
                                              initVelx, initVely])
                         pass
                 if block.health >= 5:  # rainbow
-                    self.blocks.remove(block)
-                    self.blocks.append(StandardBlock(
-                        np.array([block.x, block.y]), block.health - 4))
+                    if block in self.blocks:
+                        self.blocks.remove(block)
+                        self.blocks.append(StandardBlock(
+                            np.array([block.x, block.y]), block.health - 4))
 
     def handleCollsWithBlocksAndBullets(self, bullet):
         for block in self.blocks:
@@ -457,4 +460,6 @@ class Game:
             self.checkWinningCondition()
             while time.monotonic() - currFrameStartTime < conf.FRAME_TIME:
                 pass
+            self.ctr += 1
+            self.ctr %= 2
         return
