@@ -44,7 +44,8 @@ class Powerup:
         return False
 
     def handleCollWithPaddle(self, obj):
-        objPos, objSize, _ = obj.show()
+        objPos = [obj.x, obj.y]
+        objSize = [1, obj.length]
         if self.x >= objPos[0] and self.x <= objPos[0] + objSize[0] and self.y >= objPos[1] and self.y <= objPos[1] + objSize[1] and self.xVel > 0:
             return True
         return False

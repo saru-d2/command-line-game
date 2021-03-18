@@ -65,7 +65,7 @@ class Ball:
             bounceSound()
             self.xVel = -self.xVel
             # get dist from center of paddle
-            pdlCntY = objPos[1] + (objSize[1] / 2)
+            pdlCntY = objPos[1] + (objSize[1] // 2)
             # self.yVel += (self.y - pdlCntY) // 5
             self.x = obj.x - 1
 

@@ -106,6 +106,8 @@ class Game:
         if self.numLives <= 0:
             self.quitGame(False)
         self.makeBall()
+        self.explodeFlag = 0
+        self.shootFlag = 0
 
     def quitGame(self, won):
         '''true if won'''
