@@ -2,8 +2,6 @@
 ### dass assignment 3
 asses 2 AND 3
 
-## DASS assignment 2
-
 uses OOPS :O
 
 instructions to run:
