@@ -324,7 +324,7 @@ class Game:
     def generatePowerup(self, pos, vel):
         if self.level < 3:
             self.powerups.append(
-                Powerup(pos, conf.POWERUP_LIST[7], vel))
+                Powerup(pos, conf.POWERUP_LIST[random.randrange(0, 8)], vel))
 
     def handleCollsWithBlocks(self, blocks, ball):
         # if self.thruFlag == 0:
