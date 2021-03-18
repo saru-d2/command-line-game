@@ -4,7 +4,7 @@ import platform
 def bounceSound():
     if platform.system() == 'Darwin': #mac
         os.system('afplay sounds/bounce.wav &')
-    else 
+    else: #linux
         os.system('aplay -q sounds/bounce.wav&')
 
 
