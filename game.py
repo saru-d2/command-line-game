@@ -9,9 +9,12 @@ from ball import Ball
 import config as conf
 from paddle import Paddle
 from window import Window
-from block import StandardBlock, UnbreakableBlock, ExplodingBlock
+from block import StandardBlock, UnbreakableBlock, ExplodingBlock, RainbowBlock
 from powerup import Powerup
 from generateLevel import generateLevel
+from bullet import Bullet
+from ufo import Ufo
+from bomb import Bomb
 
 
 class Game:
@@ -25,6 +28,7 @@ class Game:
         self._winWidth = conf.MIN_COLS
         conf.WINHEIGHT = self._winHeight
         conf.WINWIDTH = self._winWidth
+        self.score = 0
 
         # initialize window, plank, ball
         self.window = Window(self._winHeight, self._winWidth)
@@ -38,17 +42,26 @@ class Game:
         self.blocks = generateLevel(1)
 
         self.balls = []
-        self.numLives = 3
+        self.numLives = 5
+        self.ufoLives = -1
         self.makeBall()
 
+        self.shootFlag = 0
         self.powerups = []
+
+        self.bullets = []
 
         # 0 -> just as started/ after dying, 1-> in game
         self.gameState = 0
         self.thruFlag = 0
         self.grabFlag = 0
+        self.explodeFlag = 0
         self.activePowerups = []
         self.blockQueue = []
+        self.brickLastFallTime = time.monotonic()
+        self.ufo = None
+        self.bombs = []
+        self.ufoTimer = time.monotonic()
 
     def makeBall(self):
         self.balls.append(
@@ -63,76 +76,21 @@ class Game:
             if not ball.isLaunched:
                 ball.launch()
 
-    def generateBlocks(self):
-        offset = (self._winWidth % conf.BLOCK_Y_SIZE) // 2
-        blockMap = np.zeros(((self._winHeight - 10) // conf.BLOCK_X_SIZE,
-                             self._winWidth // conf.BLOCK_Y_SIZE))
-
-        for i in range((self._winHeight - 10) // 2):
-            if random.uniform(0, 1) <= conf.EXPLODING_PROB:
-                len = random.randrange(6, 9)
-                # print(self._winWidth // conf.BLOCK_Y_SIZE )
-                start = random.randrange(
-                    0, ((self._winWidth) // conf.BLOCK_Y_SIZE - len))
-                print(start)
-                for j in range(start, start + len):
-                    self.blocks.append(
-                        ExplodingBlock(
-                            np.array([
-                                i * conf.BLOCK_X_SIZE,
-                                j * conf.BLOCK_Y_SIZE + offset
-                            ])))
-                    blockMap[i][j] = 1
-                    self.numBlocks += 1
-
-        for j in range((self._winWidth) // conf.BLOCK_Y_SIZE):
-            if random.uniform(0, 1) <= conf.EXPLODING_PROB:
-                len = random.randrange(6, 9)
-                # print(self._winWidth // conf.BLOCK_Y_SIZE )
-                start = random.randrange(
-                    0, ((self._winHeight - 10) // conf.BLOCK_X_SIZE - len))
-                print(start)
-                for i in range(start, start + len):
-                    self.blocks.append(
-                        ExplodingBlock(
-                            np.array([
-                                i * conf.BLOCK_X_SIZE,
-                                j * conf.BLOCK_Y_SIZE + offset
-                            ])))
-                    blockMap[i][j] = 1
-                    self.numBlocks += 1
-                    # print(i, j)
-
-        i = 0
-        while i + conf.BLOCK_X_SIZE < self._winHeight - 10:
-            j = 0
-            while j + conf.BLOCK_Y_SIZE < self._winWidth:
-                if conf.BLOCK_PROB > random.uniform(0, 1) and blockMap[
-                        i // conf.BLOCK_X_SIZE][j // conf.BLOCK_Y_SIZE] == 0:
-                    if conf.UNBREAKABLEBLOCK_PROB > random.uniform(0, 1):
-                        self.blocks.append(
-                            UnbreakableBlock(np.array([i, j + offset])))
-                    else:
-                        self.blocks.append(
-                            StandardBlock(np.array([i, j + offset])))
-                    j += conf.BLOCK_Y_SIZE
-                    self.numBlocks += 1
-                else:
-                    j += conf.BLOCK_Y_SIZE
-            i += conf.BLOCK_X_SIZE
-
     def drawObjs(self):
         self.window.draw(self.paddle)
-
+        
         for block in self.blocks:
             self.window.draw(block)
-
         for ball in self.balls:
             self.window.draw(ball)
-
         for powerup in self.powerups:
             self.window.draw(powerup)
-
+        for bullet in self.bullets:
+            self.window.draw(bullet)
+        if self.ufo is not None:
+            self.window.draw(self.ufo)
+        for bomb in self.bombs:
+            self.window.draw(bomb)
         return
 
     def onDying(self):
@@ -174,12 +132,8 @@ class Game:
         elif inChar == 'p':
             self.skipLevel()
 
-        # elif inChar == 'l':
-        #     self.handleBallMultiply()
-        #     pass
-
-        # elif inChar == 'k':
-        #     self.paddle.shrink()
+        elif inChar == 'l':
+            self.shootFlag = 1
 
     def handleExploding(self):
         newQueue = []
@@ -193,8 +147,31 @@ class Game:
                         newQueue.append(b)
             if block in self.blocks:
                 self.blocks.remove(block)
+                self.score += 1
         self.blockQueue.clear()
         self.blockQueue = newQueue
+
+    def spawnBricks(self, x):
+        y = 0
+        offset = (conf.MIN_COLS % conf.BLOCK_Y_SIZE) // 2
+        while y  < 9:
+            self.blocks.append(StandardBlock(np.array([x*conf.BLOCK_X_SIZE, y * conf.BLOCK_Y_SIZE + offset])))
+            # i+=conf.BLOCK_Y_SIZE
+            y += 1
+
+    def ufoHit(self):
+        self.ufoLives -= 1
+        if self.ufoLives == 3:
+            self.spawnBricks(4)
+        if self.ufoLives == 1:
+            self.spawnBricks(5)
+            
+
+    def handleCollsBallUfo(self, ball):
+        hit = ball.handleCollUfo(self.ufo)
+
+        if hit:
+            self.ufoHit()
 
     def handlePhysics(self):
 
@@ -240,6 +217,55 @@ class Game:
                 self.resetPower(powerup['power'])
                 self.activePowerups.remove(powerup)
 
+        for block in self.blocks:
+            if block.health >= 5:
+                block.tick()
+
+        for bullet in self.bullets:
+            ded = bullet.update()
+            if ded and bullet in self.bullets:
+                self.bullets.remove(bullet)
+
+        for bullet in self.bullets:
+            self.handleCollsWithBlocksAndBullets(bullet)
+
+        if self.shootFlag > 0:
+            # shooootttt
+            self.bullets.append(
+                Bullet(np.array([self.paddle.x, self.paddle.y])))
+            self.bullets.append(
+                Bullet(np.array([self.paddle.x, self.paddle.y + self.paddle.length])))
+
+
+        
+
+        if self.ufo is not None:
+            self.ufo.update(self.paddle)
+            if time.monotonic() - self.ufoTimer > conf.UFO_BOMB_INTERVAL:
+                self.bombs.append(Bomb([self.ufo.x + 4, self.ufo.y + 8]))
+                self.ufoTimer = time.monotonic()
+
+            for bullet in self.bullets:
+                if bullet.handleCollsWithUfo(self.ufo):
+                    # self.ufoLives -= 1
+                    self.ufoHit()
+                    if bullet in self.bullets:
+                        self.bullets.remove(bullet)
+
+            for ball in self.balls:
+                self.handleCollsBallUfo(ball)
+
+            for bomb in self.bombs:
+                hit = bomb.handleCollsWithPaddle(self.paddle)
+                if hit:
+                    self.numLives -= 1
+                    if bomb in self.bombs:
+                        self.bombs.remove(bomb)
+
+            for bomb in self.bombs:
+                bomb.update()
+
+
     def resetPower(self, power):
         if power == 'ep':
             self.paddle.shrink()
@@ -252,6 +278,10 @@ class Game:
         elif power == 'fb':
             for ball in self.balls:
                 ball.slower()
+        elif power == 'sh':
+            self.shootFlag -= 1
+        elif power == 'eb':
+            self.explodeFlag -= 1
 
     def handleBallMultiply(self):
         balls2 = self.balls.copy()
@@ -285,13 +315,21 @@ class Game:
             self.grabFlag += 1
             # handle
             pass
+        elif power == 'sh':
+            self.shootFlag += 1
 
-    def generatePowerup(self, pos):
-        self.powerups.append(
-            Powerup(pos, conf.POWERUP_LIST[random.randrange(0, 6)]))
+        elif power == 'eb':
+            self.explodeFlag += 1
+
+    def generatePowerup(self, pos, vel):
+        if self.level < 3:
+            self.powerups.append(
+                Powerup(pos, conf.POWERUP_LIST[7], vel))
 
     def handleCollsWithBlocks(self, blocks, ball):
         # if self.thruFlag == 0:
+        initVelx = ball.xVel
+        initVely = ball.yVel
         for block in self.blocks:
             if self.thruFlag == 0:
                 hit = ball.handleCollsWithBlock(block)
@@ -299,8 +337,9 @@ class Game:
                 hit = ball.destroy(block)
             if hit:
                 ded = block.hit()
-                if ded or self.thruFlag > 0:
-                    if block.health == 4:  # exploding
+
+                if ded or self.thruFlag > 0 or self.explodeFlag > 0:
+                    if block.health == 4 or self.explodeFlag > 0:  # exploding
                         for b in self.blocks:
                             if b == block:
                                 continue
@@ -309,11 +348,46 @@ class Game:
                                 self.blockQueue.append(b)
                     if block in self.blocks:
                         self.blocks.remove(block)
+                        self.score += 1
                     # chance to generate powerup
-                    if random.uniform(0, 1) > conf.POWERUP_PROB:
+                    if random.uniform(0, 1) <= conf.POWERUP_PROB:
                         # generate powerup
-                        self.generatePowerup(np.array([block.x, block.y]))
+                        self.generatePowerup(np.array([block.x, block.y]), [
+                                             initVelx, initVely])
                         pass
+                if block.health >= 5:  # rainbow
+                    self.blocks.remove(block)
+                    self.blocks.append(StandardBlock(
+                        np.array([block.x, block.y]), block.health - 4))
+
+    def handleCollsWithBlocksAndBullets(self, bullet):
+        for block in self.blocks:
+            hit = bullet.handleCollWithBlock(block)
+            if hit:
+                ded = block.hit()
+
+                if ded:
+                    if block.health == 4:  # exploding
+                        for b in self.blocks:
+                            if b == block:
+                                continue
+                            if abs(b.x - block.x) <= conf.BLOCK_X_SIZE and abs(
+                                    b.y - block.y) <= conf.BLOCK_Y_SIZE:
+                                self.blockQueue.append(b)
+                
+                    if block in self.blocks:
+                        self.blocks.remove(block)
+                        self.score += 1
+                
+                if block.health >= 5:  # rainbow
+                    if block in self.blocks:
+                        self.blocks.remove(block)
+                    self.blocks.append(StandardBlock(
+                        np.array([block.x, block.y]), block.health - 4))
+                
+                if bullet in self.bullets:
+                    self.bullets.remove(bullet)
+                    return
 
     def newLevel(self):
         self.blocks = generateLevel(self.level)
@@ -325,19 +399,45 @@ class Game:
         self.makeBall()
         self.activePowerups.clear()
         self.gameState = 0
+        self.shootFlag = 0
+        self.bullets.clear()
+        if self.level == 3:
+            self.ufo = Ufo([0, self.paddle.y])
+            self.ufoTimer = time.monotonic()
+            self.ufoLives = 5
 
     def checkWinningCondition(self):
+        
+        if self.numLives <= 0:
+            self.quitGame(False)
+        
         for block in self.blocks:
-            if block.health != 0:
+            if block.health != 0 and self.level < 3:
                 return False
+        
+        if self.ufo is not None and self.ufoLives > 0:
+            return False
+        
         if self.level >= 3:
-            self.quitGame(True)
+            if self.ufoLives == 0:
+                self.quitGame(True)
+
         else:
             self.level += 1
             self.window.flash(self.level)
             self.newLevel()
-            
         return True
+
+    def fallBricks(self):
+        for brick in self.blocks:
+            die = brick.fall()
+            if die:
+                self.quitGame(False)
+
+    def checkBrickFall(self):
+        if time.monotonic() - self.brickLastFallTime >= conf.BRICK_FALL_TIME:
+            self.fallBricks()
+            self.brickLastFallTime = time.monotonic()
 
     def play(self):
         self.window.printWelcome()
@@ -346,12 +446,13 @@ class Game:
 
             self.handleInput()
             self.handlePhysics()
+            self.checkBrickFall()
 
             self.window.clearFrame()
             self.drawObjs()
             self.window.showFrame(self.numLives, len(self.balls),
                                   self.activePowerups,
-                                  self.numBlocks - len(self.blocks))
+                                  self.score, self.brickLastFallTime, self.ufoLives)
 
             self.checkWinningCondition()
             while time.monotonic() - currFrameStartTime < conf.FRAME_TIME:

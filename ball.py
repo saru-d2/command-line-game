@@ -4,6 +4,7 @@ import numpy as np
 import random
 import math
 
+from sounds import bounceSound
 
 class Ball:
     def __init__(self, pos, vel, paddle, isLaunched):
@@ -29,6 +30,7 @@ class Ball:
     def handleCollsWithWalls(self):
         if self.x <= 0 + self.xVel and self.xVel < 0:
             self.xVel = self.xVel * -1
+            bounceSound()
             self.x = 0
         if self.x  + self.xVel >= self.maxRows and self.xVel > 0:
             self.xVel = self.xVel * -1
@@ -36,8 +38,12 @@ class Ball:
 
         if self.y + self.yVel  <= 0 and self.yVel < 0:
             self.yVel = self.yVel * -1
+            bounceSound()
+
         if self.y + self.yVel >= self.maxCols and self.yVel > 0:
             self.yVel = self.yVel * -1
+            bounceSound()
+
 
         # check out of bounds
         if self.x < 0:
@@ -56,11 +62,13 @@ class Ball:
     def handleCollsWithPaddle(self, obj):
         objPos, objSize, _ = obj.show()
         if self.x + self.xVel >= objPos[0] and self.x + self.xVel<= objPos[0] + objSize[0] and self.y + self.yVel  >= objPos[1] and self.y + self.yVel  <= objPos[1] + objSize[1] and self.xVel > 0:
+            bounceSound()
             self.xVel = -self.xVel
             # get dist from center of paddle
             pdlCntY = objPos[1] + (objSize[1] / 2)
             # self.yVel += (self.y - pdlCntY) // 5
             self.x = obj.x - 1
+
             dist = abs(self.y - pdlCntY)
             if self.y > pdlCntY:
                 self.yVel += dist // 3
@@ -85,6 +93,7 @@ class Ball:
     def handleCollsWithBlock(self, block):
         if self.x + self.xVel >= block.x and self.x + self.xVel <= block.x + conf.BLOCK_X_SIZE and self.y + self.yVel >= block.y and self.y + self.yVel <= block.y + conf.BLOCK_Y_SIZE:
             # hit pakka
+            bounceSound()
             # if x is in range before, pakka hit on y, same vice versa
             if self.x >= block.x and self.x <= block.x + conf.BLOCK_X_SIZE:
                 # hit along x
@@ -144,3 +153,22 @@ class Ball:
         if self.isLaunched:
             return np.array([self.x, self.y]), np.array([1, 1]), np.array([[self.color + self.sprite + Fore.RESET]])
         return np.array([self.paddle.x - 1, self.paddle.y + self.relY]), np.array([1, 1]), np.array([[self.color + self.sprite + Fore.RESET]])
+
+    def handleCollUfo(self, ufo):
+        if self.x + self.xVel >= ufo.x and self.x + self.xVel <= ufo.x + conf.UFO_SIZE_X and self.y + self.yVel >= ufo.y and self.y + self.yVel <= ufo.y + conf.UFO_SIZE_Y:
+            # hit pakka
+            # if x is in range before, pakka hit on y, same vice versa
+            if self.x >= ufo.x and self.x <= ufo.x + conf.UFO_SIZE_X:
+                # hit along x
+                self.yVel *= -1
+
+            elif self.y >= ufo.y and self.y <= ufo.y + conf.UFO_SIZE_Y:
+                # hit along y
+                self.xVel *= -1
+
+            else:
+                # coming along diagonal....
+                self.xVel *= -1
+                self.yVel *= -1
+            return True
+        return False

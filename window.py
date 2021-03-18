@@ -33,34 +33,37 @@ class Window:
 
         self.grid[x1:x2, y1:y2] = shape[:][:]
 
-    def showFrame(self, numLives, lenBalls, activePowerups, score):
+    def showFrame(self, numLives, lenBalls, activePowerups, score, lastBrickFall, ufoLives):
         print('\033[0;0H')  # resets cursor position
-        self.printTopGutter()
+        self.printTopGutter(ufoLives)
         for i in range(self.height):
             print(Back.BLUE + ' ' + Back.RESET, end='')
             for j in range(self.width):
                 print('\033[1m' + self.grid[i][j], end='')
             print(Back.BLUE + ' ' + Back.RESET)
-        self.printBottomGutter(numLives, lenBalls, activePowerups, score)
+        self.printBottomGutter(numLives, lenBalls, activePowerups, score, lastBrickFall)
 
-    def printBottomGutter(self, numLives, lenBalls, activePowerups, score):
+    def printBottomGutter(self, numLives, lenBalls, activePowerups, score, lastBrickFall):
         for i in self.bottomFrame:
             print(i, end='')
         print('')
         print('\033[0K', end='')
         print('\r Lives: ' + '\u2764\ufe0f ' * numLives + 'lenBalls: ' +
-              str(lenBalls) + ' score: ' + str(score) + ' powerups: ',
+              str(lenBalls) + ' score: ' + str(score) + '  powerups: ',
               end='')
         for powerup in activePowerups:
-            print(powerup['power'] + ', ', end='')
-        print('time: ' + str(int(time.monotonic() - self.startTime)))
+            print(powerup['power'] + ':' + str(10 - int(time.monotonic() - powerup['time'])) + ', ', end='')
+        print('time_fall: ' + str(10 - int(time.monotonic() - lastBrickFall)))
         print('')
         self.ctr += 1
 
-    def printTopGutter(self):
+    def printTopGutter(self, ufoLives):
         for i in self.topFrame:
             print(i, end='')
         print('')
+        if ufoLives > -1:
+            print('\033[0;0H')
+            print(Back.BLUE + Fore.GREEN + '   ufo lives: ' + '\u2764\ufe0f ' * ufoLives + Fore.RESET + Back.RESET)
 
     def clearFrame(self):
         '''clears grid'''
@@ -116,7 +119,7 @@ class Window:
     def flash(self, level):
         self.clearFrame()
         print('\033[0;0H')
-        self.printTopGutter()
+        self.printTopGutter(-1)
         for i in range(self.height):
             print(Back.BLUE + ' ' + Back.RESET, end='')
             for j in range(self.width):
